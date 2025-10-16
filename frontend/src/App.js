@@ -9,6 +9,7 @@ import Resources from './components/Resources';
 import Clients from './components/Clients';
 import Projects from './components/Projects';
 import Scheduler from './components/Scheduler';
+import CalendarView from './components/CalendarView';
 
 const theme = createTheme({
   palette: {
@@ -51,6 +52,7 @@ function App() {
               <Route path="/clients" element={<Clients />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/scheduler" element={<Scheduler />} />
+              <Route path="/calendar" element={<CalendarView />} />
             </Routes>
           </Box>
         </Box>
