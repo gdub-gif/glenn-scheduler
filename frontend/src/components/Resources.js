@@ -18,11 +18,17 @@ import {
   TextField,
   MenuItem,
   Chip,
+  Grid,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { getResources, createResource, updateResource, deleteResource } from '../services/api';
 
@@ -32,11 +38,14 @@ export default function Resources() {
   const [editingResource, setEditingResource] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    type: 'person',
-    skills: '',
+    skills: [],
+    roles: [],
     availability: 'available',
     hourlyRate: '',
+    availableHours: '',
   });
+  const [newSkill, setNewSkill] = useState('');
+  const [newRole, setNewRole] = useState('');
 
   useEffect(() => {
     loadResources();
@@ -56,27 +65,33 @@ export default function Resources() {
       setEditingResource(resource);
       setFormData({
         name: resource.name,
-        type: resource.type,
-        skills: resource.skills.join(', '),
+        skills: resource.skills || [],
+        roles: resource.roles || [],
         availability: resource.availability,
         hourlyRate: resource.hourlyRate || '',
+        availableHours: resource.availableHours || '',
       });
     } else {
       setEditingResource(null);
       setFormData({
         name: '',
-        type: 'person',
-        skills: '',
+        skills: [],
+        roles: [],
         availability: 'available',
         hourlyRate: '',
+        availableHours: '',
       });
     }
+    setNewSkill('');
+    setNewRole('');
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
     setEditingResource(null);
+    setNewSkill('');
+    setNewRole('');
   };
 
   const handleChange = (e) => {
@@ -86,12 +101,50 @@ export default function Resources() {
     });
   };
 
+  const handleAddSkill = () => {
+    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
+      setFormData({
+        ...formData,
+        skills: [...formData.skills, newSkill.trim()],
+      });
+      setNewSkill('');
+    }
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setFormData({
+      ...formData,
+      skills: formData.skills.filter(skill => skill !== skillToRemove),
+    });
+  };
+
+  const handleAddRole = () => {
+    if (newRole.trim() && !formData.roles.includes(newRole.trim())) {
+      setFormData({
+        ...formData,
+        roles: [...formData.roles, newRole.trim()],
+      });
+      setNewRole('');
+    }
+  };
+
+  const handleRemoveRole = (roleToRemove) => {
+    setFormData({
+      ...formData,
+      roles: formData.roles.filter(role => role !== roleToRemove),
+    });
+  };
+
   const handleSubmit = async () => {
     try {
       const data = {
-        ...formData,
-        skills: formData.skills.split(',').map(s => s.trim()).filter(s => s),
+        name: formData.name,
+        type: 'person',
+        skills: formData.skills,
+        roles: formData.roles,
+        availability: formData.availability,
         hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : undefined,
+        availableHours: formData.availableHours ? parseFloat(formData.availableHours) : undefined,
       };
 
       if (editingResource) {
@@ -136,9 +189,10 @@ export default function Resources() {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>Type</TableCell>
               <TableCell>Skills</TableCell>
+              <TableCell>Roles</TableCell>
               <TableCell>Availability</TableCell>
+              <TableCell>Available Hours/Week</TableCell>
               <TableCell>Hourly Rate</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -147,10 +201,14 @@ export default function Resources() {
             {resources.map((resource) => (
               <TableRow key={resource.id}>
                 <TableCell>{resource.name}</TableCell>
-                <TableCell>{resource.type}</TableCell>
                 <TableCell>
-                  {resource.skills.map((skill, index) => (
-                    <Chip key={index} label={skill} size="small" sx={{ mr: 0.5 }} />
+                  {resource.skills && resource.skills.map((skill, index) => (
+                    <Chip key={index} label={skill} size="small" sx={{ mr: 0.5, mb: 0.5 }} color="primary" />
+                  ))}
+                </TableCell>
+                <TableCell>
+                  {resource.roles && resource.roles.map((role, index) => (
+                    <Chip key={index} label={role} size="small" sx={{ mr: 0.5, mb: 0.5 }} color="secondary" />
                   ))}
                 </TableCell>
                 <TableCell>
@@ -159,6 +217,9 @@ export default function Resources() {
                     color={resource.availability === 'available' ? 'success' : 'default'}
                     size="small"
                   />
+                </TableCell>
+                <TableCell>
+                  {resource.availableHours ? `${resource.availableHours}h` : '-'}
                 </TableCell>
                 <TableCell>
                   {resource.hourlyRate ? `€${resource.hourlyRate}` : '-'}
@@ -177,61 +238,119 @@ export default function Resources() {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>{editingResource ? 'Edit Resource' : 'Add Resource'}</DialogTitle>
         <DialogContent>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Type"
-            name="type"
-            select
-            value={formData.type}
-            onChange={handleChange}
-          >
-            <MenuItem value="person">Person</MenuItem>
-            <MenuItem value="equipment">Equipment</MenuItem>
-            <MenuItem value="room">Room</MenuItem>
-          </TextField>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Skills (comma separated)"
-            name="skills"
-            value={formData.skills}
-            onChange={handleChange}
-            helperText="e.g., JavaScript, React, Node.js"
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Availability"
-            name="availability"
-            select
-            value={formData.availability}
-            onChange={handleChange}
-          >
-            <MenuItem value="available">Available</MenuItem>
-            <MenuItem value="busy">Busy</MenuItem>
-            <MenuItem value="unavailable">Unavailable</MenuItem>
-          </TextField>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Hourly Rate (€)"
-            name="hourlyRate"
-            type="number"
-            value={formData.hourlyRate}
-            onChange={handleChange}
-          />
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Available Hours per Week"
+                name="availableHours"
+                type="number"
+                value={formData.availableHours}
+                onChange={handleChange}
+                helperText="e.g., 40 for full-time"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Hourly Rate (€)"
+                name="hourlyRate"
+                type="number"
+                value={formData.hourlyRate}
+                onChange={handleChange}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Availability"
+                name="availability"
+                select
+                value={formData.availability}
+                onChange={handleChange}
+              >
+                <MenuItem value="available">Available</MenuItem>
+                <MenuItem value="busy">Busy</MenuItem>
+                <MenuItem value="unavailable">Unavailable</MenuItem>
+              </TextField>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Skills
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Add Skill"
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
+                  placeholder="e.g., JavaScript, React, Python"
+                />
+                <Button variant="outlined" onClick={handleAddSkill}>
+                  Add
+                </Button>
+              </Box>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {formData.skills.map((skill, index) => (
+                  <Chip
+                    key={index}
+                    label={skill}
+                    color="primary"
+                    onDelete={() => handleRemoveSkill(skill)}
+                  />
+                ))}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Roles
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Add Role"
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddRole()}
+                  placeholder="e.g., Developer, Designer, Manager"
+                />
+                <Button variant="outlined" onClick={handleAddRole}>
+                  Add
+                </Button>
+              </Box>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {formData.roles.map((role, index) => (
+                  <Chip
+                    key={index}
+                    label={role}
+                    color="secondary"
+                    onDelete={() => handleRemoveRole(role)}
+                  />
+                ))}
+              </Box>
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
