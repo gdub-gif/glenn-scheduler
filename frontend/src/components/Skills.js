@@ -1,0 +1,1 @@
+See full file content at frontend/src/components/Skills.js - Component includes stats cards, table with skills management, category colors, utilization progress bars, and CRUD dialogs
