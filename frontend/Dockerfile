@@ -13,8 +13,8 @@ RUN npm install && npm cache clean --force
 COPY . .
 
 # Build application
-ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # Production stage
@@ -24,7 +24,7 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built files from builder
-COPY --from=builder /app/build /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Create non-root user
 RUN adduser -D -u 1001 nginx-user && \
